@@ -175,9 +175,10 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
       //Debe retornar string
       params: { id: id }
     })),
-    fallback: false //No lo quiero en blocking, lo quiero en false
+    //fallback: false //No lo quiero en blocking, lo quiero en false
     //Si la persona pone un url q no existe, quiero mostrar un 404
     //Eso permite el fallback en false
+    fallback:'blocking', //permite pasar al getStaticProps, pero debemos verificar que existe el id en el getStaticProps -> SI solicito el 152 me dejara verlo
   }
 }
 
@@ -192,26 +193,34 @@ export const getStaticProps: GetStaticProps = async ( { params }) => {
   // console.log(ctx.params); //Me llega el id de la url
 
   const { id } = params as { id: string }; //Le digo que el id sera tipo string
-   
-  const { data } = await pokeApi.get<Pokemon>(`/pokemon/${ id }`);
-  const pokemon = {
-    id: data.id,
-    name : data.name,
-    sprites : data.sprites
-    //Le mando a mi pagina solo lo que voy a usar
-
-  }
+   //Le mando a mi pagina solo lo que voy a usar
   //Hicimos una funcion que se encargá de lo de arriba
-
-
   //Me traigo el id q llega desde getStaticPaths
+  //Si existe la data retorname esto
+  const pokemon = await getPokemonInfo( id );//Le mando el pokemon a mi pagina, solo lo que necesito y a mi función le mando el id
 
+  if( !pokemon ) {
+    //Si el pokemon no existe
+    return{
+      redirect:{
+        destination:'/', //Lo mandamos al inicio si solicita algo que no existe
+        permanent:false
+      }
+    }
+  }
+  //Si tenemos un pokemon se retornara esto
   return {
     //Aca debo enviarle las props a mi PokemonPage(ARRIBA)
     props: {
-      pokemon : pokemon//Le mando el pokemon a mi pagina, solo lo que necesito y a mi función
+      pokemon : pokemon
       
-    }
+    },
+    revalidate:86400 //60*60*24 -> Q next no haga el calculo, colocar numero
+   /*
+    Este revalidate significa que se hara un incremental static 
+    regeneration cada 24 horas, se actualizará la pagina cada 24 horas
+    ISR -> INCREMENTAL STATIC REGENERATION
+    */
   }
 }
 

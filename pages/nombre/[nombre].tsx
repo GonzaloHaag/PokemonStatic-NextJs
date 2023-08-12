@@ -167,7 +167,7 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
         paths: nombrePokemones.map(nombre => ({
             params : {nombre:nombre} //Esto le paso al getStaticProps
         })),
-        fallback: false
+        fallback: 'blocking' //NO OLVIDAR ESTO EN BLOCKING -> Si no no pasara al props 
     }
 }
 
@@ -176,26 +176,34 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
     //Recibo los parametros que me manda getStaticPaths
-    const {nombre} = params as {nombre : string}; //Recibo el nombre de los params e indico que será string
+    const { nombre } = params as {nombre : string}; //Recibo el nombre de los params e indico que será string
 
     //Ahora que tengo el nombre puedo hacer la peticion a la api por nombre 
-    const {data} = await pokeApi<Pokemon>(`/pokemon/${nombre}`);
-
-    const pokemon = {
-      id: data.id,
-      name : data.name,
-      sprites : data.sprites
-      //Le mando a mi pagina solo lo que voy a usar
-
-    }
+   
     //Para no repetir codigo hicimos una funcion que se encargá de lo de arriba
-
-
+   const pokemon = await getPokemonInfo(nombre); //Aca le mando el nombre
+   
+   if( !pokemon ) {
+    //Si el pokemon no existe lo mando a la home
+    return {
+      redirect: {
+        destination:'/',
+        permanent: false
+      }
+    }
+   }
+   //Si existe lo retorno
     return {
         props: {
             pokemon : pokemon
             //Le mando el objeto pokemon a mi pagina,Solo necesito el id, name y los sprites
-        }
+        },
+        revalidate:86400
+         /*
+         Este revalidate significa que se hara un incremental static 
+         regeneration cada 24 horas, se actualizará la pagina cada 24 horas
+        ISR -> INCREMENTAL STATIC REGENERATION
+       */
     }
 }
 

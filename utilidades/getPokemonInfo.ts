@@ -1,22 +1,53 @@
+//Funcion para no repetir codigo en [id] y [nombre]
+/*
+En un principio teniamos esto 
+  const { id } = params as { id: string }; //Le digo que el id sera tipo string
+   
+  const { data } = await pokeApi.get<Pokemon>(`/pokemon/${ id }`);
+  if(!data) { //Si no existe el id retorname esto
+    return {
+      redirect: {
+        destination:'/', //adonde lo quiero mandar si no existe lo que se solicita
+        permanent:false
+      }
+    }
+  }
+
+  const pokemon = {
+    id: data.id,
+    name : data.name,
+    sprites : data.sprites
+    //Le mando a mi pagina solo lo que voy a usar
+
+  }
+*/
+
+/*
+Como en nombre y en id hago exactamente lo mismo,  hacemos 
+una funcion para generalizarlo
+*/
 import pokeApi from "@/api/pokeApi";
 import { Pokemon } from "@/interfaces/pokemonFull";
+//Importar la interface para manejar los datos q recibimos
 
-//Esta funcion retornara la data para cuando se llame
-export const getPokemonInfo = async (nameOId : string) => {
-    //voy a recibir el nombre o el id 
+export const getPokemonInfo = async (nombreOId:string) => {
+  try {
+    const { data } = await pokeApi.get<Pokemon>(`/pokemon/${ nombreOId }`);
 
-    //Ahora que tengo el nombre puedo hacer la peticion a la api por nombre 
-    const {data} = await pokeApi<Pokemon>(`/pokemon/${nameOId}`);
-
-    return  {
-        //Retorna esta informacion que necesito, para no repetir codigo en [nombre] o [id]
+    return {
       id: data.id,
       name : data.name,
       sprites : data.sprites
       //Le mando a mi pagina solo lo que voy a usar
-
+  
     }
 
-    
+  }
+  catch(error) {
+    return null;
+  }
+  //Recibe el nombre o el id, retorna un string
+   
+ 
 
 }
